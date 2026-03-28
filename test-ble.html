@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On.e BLE Test</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, system-ui, sans-serif; background: #1a1a2e; color: #eee; padding: 16px; max-width: 480px; margin: 0 auto; }
+h1 { font-size: 1.4em; text-align: center; margin-bottom: 8px; }
+.status-bar { text-align: center; padding: 6px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; font-size: 0.9em; }
+.status-disconnected { background: #e74c3c33; color: #e74c3c; }
+.status-connecting { background: #f39c1233; color: #f39c12; }
+.status-connected { background: #2ecc7133; color: #2ecc71; }
+.status-authenticated { background: #3498db33; color: #3498db; }
+
+section { background: #16213e; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+section h2 { font-size: 1em; margin-bottom: 10px; color: #8be9fd; }
+
+.device-info { font-size: 0.85em; color: #aaa; margin-top: 8px; }
+.device-info span { color: #eee; }
+
+.btn { display: inline-block; padding: 10px 16px; border: none; border-radius: 8px; font-size: 0.95em; font-weight: 600; cursor: pointer; margin: 4px; transition: opacity 0.2s; }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn:active:not(:disabled) { opacity: 0.7; }
+.btn-primary { background: #3498db; color: #fff; }
+.btn-success { background: #2ecc71; color: #fff; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-secondary { background: #6c757d; color: #fff; }
+.btn-full { width: 100%; text-align: center; }
+
+.control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.control-card { background: #1a1a2e; border-radius: 10px; padding: 14px; text-align: center; }
+.control-card .label { font-size: 0.85em; color: #aaa; margin-bottom: 8px; }
+.control-card .indicator { width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin-bottom: 8px; }
+.indicator-off { background: #555; box-shadow: 0 0 4px #333; }
+.indicator-on { background: #2ecc71; box-shadow: 0 0 12px #2ecc71; }
+
+input[type=text] { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 8px; background: #1a1a2e; color: #eee; font-family: monospace; font-size: 0.9em; margin-bottom: 8px; }
+
+details { margin-top: 8px; }
+details summary { font-size: 0.85em; color: #aaa; cursor: pointer; }
+
+#log { width: 100%; height: 200px; background: #0a0a1a; color: #8be9fd; border: 1px solid #333; border-radius: 8px; padding: 8px; font-family: monospace; font-size: 0.75em; resize: vertical; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+
+.raw-status { font-family: monospace; font-size: 0.85em; color: #f39c12; margin-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>On.e BLE Test</h1>
+<div id="statusBar" class="status-bar status-disconnected">Deconnecte</div>
+
+<!-- Connexion -->
+<section>
+  <button id="btnConnect" class="btn btn-primary btn-full" onclick="doConnect()">Connecter</button>
+  <button id="btnDisconnect" class="btn btn-danger btn-full" onclick="doDisconnect()" style="display:none">Deconnecter</button>
+  <div id="deviceInfo" class="device-info" style="display:none">
+    <div>Nom : <span id="infoName">-</span> | Serie : <span id="infoSerial">-</span> | FW : <span id="infoFirmware">-</span></div>
+  </div>
+</section>
+
+<!-- Controle -->
+<section id="sectionControl" style="display:none">
+  <h2>Controle</h2>
+  <div class="control-grid">
+    <div class="control-card">
+      <div class="label">Pompe</div>
+      <div><span id="indPump" class="indicator indicator-off"></span></div>
+      <button class="btn btn-success" onclick="sendCommand(true, null)">ON</button>
+      <button class="btn btn-danger" onclick="sendCommand(false, null)">OFF</button>
+    </div>
+    <div class="control-card">
+      <div class="label">Lumiere</div>
+      <div><span id="indLight" class="indicator indicator-off"></span></div>
+      <button class="btn btn-success" onclick="sendCommand(null, true)">ON</button>
+      <button class="btn btn-danger" onclick="sendCommand(null, false)">OFF</button>
+    </div>
+  </div>
+  <div class="raw-status">Statut brut : <span id="rawStatus">-</span></div>
+</section>
+
+<!-- SharedKey -->
+<section>
+  <div style="font-size:0.8em;color:#666">SharedKey: <code id="skDisplay">chargee depuis localStorage</code></div>
+</section>
+
+<!-- Logs -->
+<section>
+  <details>
+    <summary>Logs</summary>
+    <div id="log" style="margin-top:8px"></div>
+    <button class="btn btn-secondary" onclick="document.getElementById('log').textContent=''" style="margin-top:8px;width:100%;">Effacer</button>
+  </details>
+</section>
+
+<script>
+// ============================================================
+// AES-128-ECB pure JS
+// ============================================================
+const AES = (() => {
+  const SBOX = [
+    0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
+    0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
+    0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
+    0x04,0xc7,0x23,0xc3,0x18,0x96,0x05,0x9a,0x07,0x12,0x80,0xe2,0xeb,0x27,0xb2,0x75,
+    0x09,0x83,0x2c,0x1a,0x1b,0x6e,0x5a,0xa0,0x52,0x3b,0xd6,0xb3,0x29,0xe3,0x2f,0x84,
+    0x53,0xd1,0x00,0xed,0x20,0xfc,0xb1,0x5b,0x6a,0xcb,0xbe,0x39,0x4a,0x4c,0x58,0xcf,
+    0xd0,0xef,0xaa,0xfb,0x43,0x4d,0x33,0x85,0x45,0xf9,0x02,0x7f,0x50,0x3c,0x9f,0xa8,
+    0x51,0xa3,0x40,0x8f,0x92,0x9d,0x38,0xf5,0xbc,0xb6,0xda,0x21,0x10,0xff,0xf3,0xd2,
+    0xcd,0x0c,0x13,0xec,0x5f,0x97,0x44,0x17,0xc4,0xa7,0x7e,0x3d,0x64,0x5d,0x19,0x73,
+    0x60,0x81,0x4f,0xdc,0x22,0x2a,0x90,0x88,0x46,0xee,0xb8,0x14,0xde,0x5e,0x0b,0xdb,
+    0xe0,0x32,0x3a,0x0a,0x49,0x06,0x24,0x5c,0xc2,0xd3,0xac,0x62,0x91,0x95,0xe4,0x79,
+    0xe7,0xc8,0x37,0x6d,0x8d,0xd5,0x4e,0xa9,0x6c,0x56,0xf4,0xea,0x65,0x7a,0xae,0x08,
+    0xba,0x78,0x25,0x2e,0x1c,0xa6,0xb4,0xc6,0xe8,0xdd,0x74,0x1f,0x4b,0xbd,0x8b,0x8a,
+    0x70,0x3e,0xb5,0x66,0x48,0x03,0xf6,0x0e,0x61,0x35,0x57,0xb9,0x86,0xc1,0x1d,0x9e,
+    0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
+    0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
+  ];
+  const RCON = [0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36];
+  function subBytes(s) { for (let i = 0; i < 16; i++) s[i] = SBOX[s[i]]; }
+  function shiftRows(s) {
+    let t = s[1]; s[1]=s[5]; s[5]=s[9]; s[9]=s[13]; s[13]=t;
+    t=s[2]; s[2]=s[10]; s[10]=t; t=s[6]; s[6]=s[14]; s[14]=t;
+    t=s[15]; s[15]=s[11]; s[11]=s[7]; s[7]=s[3]; s[3]=t;
+  }
+  function xtime(a) { return ((a<<1)^(((a>>7)&1)*0x1b))&0xff; }
+  function mixColumns(s) {
+    for (let i = 0; i < 16; i += 4) {
+      const a=s[i],b=s[i+1],c=s[i+2],d=s[i+3], e=a^b^c^d;
+      s[i]^=e^xtime(a^b); s[i+1]^=e^xtime(b^c);
+      s[i+2]^=e^xtime(c^d); s[i+3]^=e^xtime(d^a);
+    }
+  }
+  function addRoundKey(s, rk, off) { for (let i = 0; i < 16; i++) s[i] ^= rk[off+i]; }
+  function keyExpansion(key) {
+    const w = new Uint8Array(176); w.set(key);
+    for (let i = 4; i < 44; i++) {
+      let t = w.slice((i-1)*4, i*4);
+      if (i % 4 === 0) t = new Uint8Array([SBOX[t[1]]^RCON[i/4-1], SBOX[t[2]], SBOX[t[3]], SBOX[t[0]]]);
+      for (let j = 0; j < 4; j++) w[i*4+j] = w[(i-4)*4+j] ^ t[j];
+    }
+    return w;
+  }
+  function encryptBlock(block, rk) {
+    const s = new Uint8Array(block); addRoundKey(s, rk, 0);
+    for (let r = 1; r < 10; r++) { subBytes(s); shiftRows(s); mixColumns(s); addRoundKey(s, rk, r*16); }
+    subBytes(s); shiftRows(s); addRoundKey(s, rk, 160); return s;
+  }
+  return { ecbEncrypt(k, p) {
+    const rk = keyExpansion(new Uint8Array(k)), o = new Uint8Array(p.length);
+    for (let i = 0; i < p.length; i += 16) o.set(encryptBlock(p.slice(i, i+16), rk), i);
+    return o;
+  }};
+})();
+
+// ============================================================
+// Helpers
+// ============================================================
+function hexToBytes(h) { const b = new Uint8Array(h.length/2); for (let i=0;i<h.length;i+=2) b[i/2]=parseInt(h.substr(i,2),16); return b; }
+function bytesToHex(b) { return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function reverseBytes(b) { return new Uint8Array(Array.from(b).reverse()); }
+
+const PRIVATE_KEY = '1141a80537444a6a85888d84115f2811';
+const UUID_BASE = '-4c7b-4e67-8292-a9b8e686cf87';
+const UUID_SYSTEM     = 'fbde0000' + UUID_BASE;
+const UUID_RANDOMKEY  = 'fbde0001' + UUID_BASE;
+const UUID_SHAREDKEY  = 'fbde0002' + UUID_BASE;
+const UUID_ENCRYPTKEY = 'fbde0003' + UUID_BASE;
+const UUID_ONE        = 'fbde0200' + UUID_BASE;
+const UUID_STATUS     = 'fbde0201' + UUID_BASE;
+const UUID_CONTROL    = 'fbde0202' + UUID_BASE;
+
+// SharedKey chargee depuis localStorage (remplie lors de l'association)
+let SHARED_KEY = localStorage.getItem('one_shared_key') || '';
+
+let bleDevice = null, bleServer = null, systemService = null, oneService = null;
+let controlChar = null, statusChar = null;
+let pumpState = false, lightState = false;
+
+function log(msg) {
+  const el = document.getElementById('log');
+  const ts = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3});
+  el.textContent += `[${ts}] ${msg}\n`;
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(text, cls) {
+  const el = document.getElementById('statusBar');
+  el.textContent = text; el.className = 'status-bar ' + cls;
+}
+function updateIndicators() {
+  document.getElementById('indPump').className = 'indicator ' + (pumpState ? 'indicator-on' : 'indicator-off');
+  document.getElementById('indLight').className = 'indicator ' + (lightState ? 'indicator-on' : 'indicator-off');
+}
+
+// ============================================================
+// Connect: scan + connect + auth + setup (one button)
+// ============================================================
+async function doConnect() {
+  try {
+    const sharedKeyHex = SHARED_KEY;
+
+    log('Scan BLE...');
+    setStatus('Scan...', 'status-connecting');
+
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [
+        { services: [UUID_SYSTEM] },
+        { namePrefix: 'ON' },
+        { namePrefix: 'On' }
+      ],
+      optionalServices: [
+        UUID_SYSTEM, UUID_ONE,
+        // All possible FBDE groups
+        'fbde0100' + UUID_BASE, 'fbde0300' + UUID_BASE, 'fbde0400' + UUID_BASE,
+        'fbde0500' + UUID_BASE, 'fbde0600' + UUID_BASE, 'fbde0700' + UUID_BASE,
+        'fbde0800' + UUID_BASE, 'fbde0900' + UUID_BASE,
+        // Standard services
+        0x180A, 0x1805, 0x1801,
+        // OTA
+        '1d14d6ee-fd63-4fa1-bfa4-8f47b42119f0'
+      ]
+    });
+
+    log(`Device: ${bleDevice.name}`);
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    // Connexion GATT avec retry
+    setStatus('Connexion...', 'status-connecting');
+    let connected = false;
+    for (let attempt = 1; attempt <= 3 && !connected; attempt++) {
+      try {
+        log(`Tentative ${attempt}/3...`);
+        bleServer = await bleDevice.gatt.connect();
+        connected = true;
+      } catch(e) {
+        log(`Tentative ${attempt} echouee: ${e.message}`);
+        if (attempt < 3) {
+          log('Attente 2s avant retry...');
+          await new Promise(r => setTimeout(r, 2000));
+        } else {
+          throw new Error('Connexion impossible apres 3 tentatives. Verifiez que:\n- L\'app On.e est fermee (force stop)\n- Le device est allume et a portee\n- Le Bluetooth est active');
+        }
+      }
+    }
+    log('GATT connecte');
+
+    // Discover ALL services and characteristics
+    log('--- DECOUVERTE SERVICES ---');
+    systemService = null; oneService = null;
+    let allCharacteristics = {}; // uuid -> characteristic
+
+    try {
+      const services = await bleServer.getPrimaryServices();
+      for (const svc of services) {
+        const svcUuid = svc.uuid;
+        log(`SERVICE: ${svcUuid}`);
+        try {
+          const chars = await svc.getCharacteristics();
+          for (const ch of chars) {
+            const props = [];
+            if (ch.properties.read) props.push('R');
+            if (ch.properties.write) props.push('W');
+            if (ch.properties.writeWithoutResponse) props.push('Wn');
+            if (ch.properties.notify) props.push('N');
+            if (ch.properties.indicate) props.push('I');
+            log(`  CHAR: ${ch.uuid} [${props.join(',')}]`);
+            allCharacteristics[ch.uuid] = ch;
+          }
+        } catch(e) { log(`  (pas de chars: ${e.message})`); }
+
+        if (svcUuid === UUID_SYSTEM) systemService = svc;
+        if (svcUuid === UUID_ONE) oneService = svc;
+      }
+    } catch(e) {
+      log(`Erreur decouverte: ${e.message}`);
+      // Fallback: try specific services
+      try { systemService = await bleServer.getPrimaryService(UUID_SYSTEM); log('Service SYSTEM OK (fallback)'); } catch(e2) {}
+      try { oneService = await bleServer.getPrimaryService(UUID_ONE); log('Service ONE OK (fallback)'); } catch(e2) {}
+    }
+    log('--- FIN DECOUVERTE ---');
+
+    if (!systemService) throw new Error('Service SYSTEM (FBDE0000) introuvable !');
+
+    // Read device info
+    document.getElementById('infoName').textContent = bleDevice.name;
+    document.getElementById('deviceInfo').style.display = 'block';
+
+    setStatus('Connecte, authentification...', 'status-connecting');
+
+    // === AUTH ===
+    log('Lecture nonce (FBDE0001)...');
+    const nonceChar = allCharacteristics[UUID_RANDOMKEY] || await systemService.getCharacteristic(UUID_RANDOMKEY);
+    const nonceRaw = new Uint8Array((await nonceChar.readValue()).buffer);
+    log(`Nonce BLE: ${bytesToHex(nonceRaw)} (${nonceRaw.length} octets)`);
+
+    const nonceHex = bytesToHex(reverseBytes(nonceRaw));
+    const plaintextHex = sharedKeyHex + nonceHex;
+    log(`Plaintext: ${plaintextHex} (${plaintextHex.length/2} octets)`);
+
+    const encrypted = AES.ecbEncrypt(hexToBytes(PRIVATE_KEY), hexToBytes(plaintextHex));
+    const response = reverseBytes(encrypted);
+    log(`Reponse: ${bytesToHex(response)}`);
+
+    const encryptChar = allCharacteristics[UUID_ENCRYPTKEY] || await systemService.getCharacteristic(UUID_ENCRYPTKEY);
+    await encryptChar.writeValueWithResponse(response.buffer);
+    log('Auth ecrite sur FBDE0003');
+
+    // Sync RTC (optional)
+    try {
+      const dtc = allCharacteristics['00002a08-0000-1000-8000-00805f9b34fb'];
+      if (dtc) {
+        const now = new Date(), buf = new ArrayBuffer(7), v = new DataView(buf);
+        v.setUint16(0, now.getFullYear(), true);
+        v.setUint8(2, now.getMonth()+1); v.setUint8(3, now.getDate());
+        v.setUint8(4, now.getHours()); v.setUint8(5, now.getMinutes()); v.setUint8(6, now.getSeconds());
+        await dtc.writeValueWithResponse(buf);
+        log('RTC sync OK');
+      }
+    } catch(e) { log(`RTC: ${e.message}`); }
+
+    // Read all FBDE01xx characteristics to understand their content
+    log('--- LECTURE FBDE01xx ---');
+    const fbde01uuids = ['fbde0101','fbde0102','fbde0103','fbde0104'];
+    for (const prefix of fbde01uuids) {
+      const uuid = prefix + UUID_BASE;
+      const ch = allCharacteristics[uuid];
+      if (ch && ch.properties.read) {
+        try {
+          const val = new Uint8Array((await ch.readValue()).buffer);
+          const hex = bytesToHex(val);
+          const ascii = Array.from(val).map(b => b >= 32 && b < 127 ? String.fromCharCode(b) : '.').join('');
+          log(`  ${prefix}: ${hex} (${val.length}B) "${ascii}"`);
+        } catch(e) { log(`  ${prefix}: erreur lecture: ${e.message}`); }
+      }
+    }
+    log('--- FIN LECTURE ---');
+
+    // Find control and status characteristics
+    // Try FBDE02xx first, then fall back to FBDE01xx
+    statusChar = allCharacteristics[UUID_STATUS];
+    controlChar = allCharacteristics[UUID_CONTROL];
+
+    if (!statusChar || !controlChar) {
+      log('Chars FBDE02xx absentes, recherche dans FBDE01xx...');
+      // FBDE0104 has R,W,N - likely the combined status/control
+      const fbde0104 = allCharacteristics['fbde0104' + UUID_BASE];
+      // FBDE0101-0103 have R,W - could be control chars
+      const fbde0101 = allCharacteristics['fbde0101' + UUID_BASE];
+      const fbde0102 = allCharacteristics['fbde0102' + UUID_BASE];
+      const fbde0103 = allCharacteristics['fbde0103' + UUID_BASE];
+
+      if (fbde0104) {
+        // FBDE0104 has notify -> status char
+        statusChar = fbde0104;
+        log(`STATUS = FBDE0104 (R,W,N)`);
+      }
+      // Try each writable char as control - we'll try writing to them
+      // For now, let's try FBDE0101 as control (first writable char in the service)
+      if (fbde0101) {
+        controlChar = fbde0101;
+        log(`CONTROL = FBDE0101 (R,W) -- a tester`);
+      }
+    }
+
+    if (!statusChar && !controlChar) {
+      log('ERREUR: Aucune caracteristique utilisable trouvee.');
+      setStatus('Auth OK - pas de controle', 'status-connected');
+      document.getElementById('btnConnect').style.display = 'none';
+      document.getElementById('btnDisconnect').style.display = 'block';
+      return;
+    }
+
+    // Setup status notifications
+    log(`Status char: ${statusChar ? statusChar.uuid : 'aucune'}`);
+    log(`Control char: ${controlChar ? controlChar.uuid : 'aucune'}`);
+    const initVal = new Uint8Array((await statusChar.readValue()).buffer);
+    log(`Statut initial: 0x${bytesToHex(initVal)}`);
+    parseStatus(initVal);
+    statusChar.addEventListener('characteristicvaluechanged', (ev) => {
+      parseStatus(new Uint8Array(ev.target.value.buffer));
+    });
+    await statusChar.startNotifications();
+    log('Notifications statut OK');
+
+    // Done !
+    setStatus('Connecte & authentifie', 'status-authenticated');
+    document.getElementById('btnConnect').style.display = 'none';
+    document.getElementById('btnDisconnect').style.display = 'block';
+    document.getElementById('sectionControl').style.display = 'block';
+    log('=== PRET ===');
+
+  } catch(e) {
+    log(`ERREUR: ${e.message}`);
+    setStatus('Erreur', 'status-disconnected');
+  }
+}
+
+function onDisconnected() {
+  log('Deconnecte');
+  setStatus('Deconnecte', 'status-disconnected');
+  document.getElementById('btnConnect').style.display = 'block';
+  document.getElementById('btnDisconnect').style.display = 'none';
+  document.getElementById('sectionControl').style.display = 'none';
+  bleServer = null; systemService = null; oneService = null;
+  controlChar = null; statusChar = null;
+  pumpState = false; lightState = false; updateIndicators();
+}
+
+async function doDisconnect() {
+  if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+}
+
+// ============================================================
+// Status
+// ============================================================
+function parseStatus(bytes) {
+  const hex = bytesToHex(bytes);
+  document.getElementById('rawStatus').textContent = `0x${hex} (${Array.from(bytes).map(b=>b.toString(2).padStart(8,'0')).join(' ')})`;
+  const val = bytes[0];
+  if (val === 0x00 || val === 0x02) { pumpState = false; lightState = false; }
+  else if (val === 0x05) { pumpState = true; lightState = false; }
+  else if (val === 0x28) { pumpState = false; lightState = true; }
+  else if (val === 0x2D) { pumpState = true; lightState = true; }
+  else { log(`Statut inconnu: 0x${hex}`); }
+  updateIndicators();
+}
+
+// ============================================================
+// Commands
+// ============================================================
+async function sendCommand(pump, light) {
+  if (!controlChar) { log('Non authentifie'); return; }
+  if (pump === null) pump = pumpState;
+  if (light === null) light = lightState;
+  const cmd = (pump ? 0x01 : 0x00) | (light ? 0x04 : 0x00);
+  log(`Commande: 0x${cmd.toString(16).padStart(2,'0')} (pompe=${pump?'ON':'OFF'} lumiere=${light?'ON':'OFF'})`);
+  try {
+    const buf = new Uint8Array([cmd]);
+    if (controlChar.properties.writeWithoutResponse) {
+      await controlChar.writeValueWithoutResponse(buf.buffer);
+    } else {
+      await controlChar.writeValueWithResponse(buf.buffer);
+    }
+    log('OK');
+  } catch(e) { log(`ERREUR: ${e.message}`); }
+}
+
+// ============================================================
+// Init
+// ============================================================
+window.addEventListener('load', () => {
+  if (!navigator.bluetooth) {
+    log('Web Bluetooth non supporte ! Utilisez Chrome Android.');
+    document.getElementById('btnConnect').disabled = true;
+    return;
+  }
+  log(`SharedKey: ${SHARED_KEY}`);
+  log('Pret.');
+});
+</script>
+</body>
+</html>

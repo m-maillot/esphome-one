@@ -1,0 +1,14 @@
+# Secrets ESPHome
+esphome/secrets.yaml
+
+# Fichiers de capture / APK
+*.xapk
+*.apk
+*.log
+*.hci
+
+# ESPHome build
+esphome/.esphome/
+
+# OS
+.DS_Store

@@ -1,0 +1,255 @@
+================================================================================
+On.e Bluetooth Authentication Algorithm - Reverse Engineering Analysis
+================================================================================
+Source: com.acis.oneapp v2.6.3 - Hermes Bytecode v96
+Date: 2026-03-28
+Tool: hermes-dec 0.1.2 (Python decompiler for Hermes v96)
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. BLE Service and Characteristic UUIDs
+2. Connection Flow Overview
+3. Association Process (Pairing / Key Exchange)
+4. Authorisation Process (Authentication - THE CRITICAL PIECE)
+5. Identification Process
+6. Key Constants
+7. Algorithm Pseudocode
+
+================================================================================
+1. BLE SERVICE AND CHARACTERISTIC UUIDs
+================================================================================
+
+Advertising UUIDs:
+  ADVERTISING_SERVICE_UUID_ASSOCIATION = 'FBDE0100-4C7B-4E67-8292-A9B8E686CF87'
+  ADVERTISING_SERVICE_UUID_USE         = 'FBDE0000-4C7B-4E67-8292-A9B8E686CF87'
+
+System Service:
+  SERVICE_SYSTEM_UUID             = 'FBDE0000-4C7B-4E67-8292-A9B8E686CF87'
+  SERVICE_SYSTEM_RANDOMKEY_UUID   = 'FBDE0001-4C7B-4E67-8292-A9B8E686CF87'  (READ: nonce/random key)
+  SERVICE_SYSTEM_SHAREDKEY_UUID   = 'FBDE0002-4C7B-4E67-8292-A9B8E686CF87'  (READ: shared key during association)
+  SERVICE_SYSTEM_ENCRYPTKEY_UUID  = 'FBDE0003-4C7B-4E67-8292-A9B8E686CF87'  (WRITE: encrypted response)
+
+Device Info Service:
+  SERVICE_DEVICE_UUID                  = '180A'
+  SERVICE_DEVICE_MODELNUMBER_UUID      = '2A24'
+  SERVICE_DEVICE_SERIALNUMBER_UUID     = '2A25'
+  SERVICE_DEVICE_FIRMWAREVERSION_UUID  = '2A26'
+
+Time Service:
+  SERVICE_TIME_UUID          = '1805'
+  SERVICE_TIME_DATETIME_UUID = '2A08'
+  SERVICE_TIME_DAY_UUID      = '2A09'
+
+OTA Service:
+  SERVICE_OTA          = '1D14D6EE-FD63-4FA1-BFA4-8F47B42119F0'
+  SERVICE_OTA_CONTROL  = 'F7BF3564-FB6D-4E53-88A4-5E37E0326063'
+  SERVICE_OTA_DATA     = '984227F3-34FC-4045-A5D0-2C581F81A153'
+
+================================================================================
+2. CONNECTION FLOW OVERVIEW
+================================================================================
+
+The connection follows this sequence:
+  1. connectProcess       - BLE connect, discover services, request MTU
+  2. associationProcess   - Read shared key (only during initial pairing)
+  3. authorisationProcess - Read nonce, compute AES response, write back
+  4. identificationProcess - Read model number, serial number, firmware version
+  5. syncRTCProcess       - Sync real-time clock
+  6. utilisationProcess   - Normal operation
+  7. disconnectProcess    - Disconnect
+
+Two implementations exist: BLE (direct) and MQTT (via cloud gateway).
+
+================================================================================
+3. ASSOCIATION PROCESS (Key Exchange / Pairing)
+================================================================================
+
+Source: Function #14324 -> #14327 -> #14328
+
+This process runs only during initial device pairing. It reads the shared key
+from the device and stores it locally.
+
+Algorithm:
+  1. Read characteristic FBDE0002 (SERVICE_SYSTEM_SHAREDKEY_UUID)
+     from service FBDE0000 (SERVICE_SYSTEM_UUID)
+  2. Decode the BLE response: Buffer.from(response.value, 'base64')
+  3. REVERSE the byte order of the buffer
+  4. Convert to hex string: buffer.reverse().toString('hex')
+  5. Store as _deviceModel.sharedKey
+
+Pseudocode:
+  rawBytes = base64Decode(bleCharacteristic.value)
+  sharedKey = bytesToHex(reverseBytes(rawBytes))
+  device.sharedKey = sharedKey  // stored persistently
+
+The sharedKey is a hex string, e.g. "0123456789abcdef".
+NOTE: The bytes are reversed from BLE wire format (little-endian to big-endian).
+
+================================================================================
+4. AUTHORISATION PROCESS (Authentication) - THE CRITICAL ALGORITHM
+================================================================================
+
+Source: Function #14331 -> #14334 -> #14335 (BLE version)
+        Function #15446 -> #15448 (MQTT version)
+
+This is the authentication step. It proves the app knows the shared key.
+
+STEP-BY-STEP ALGORITHM:
+
+Step 1: Get the PRIVATE_KEY (hardcoded constant)
+  PRIVATE_KEY = '1141a80537444a6a85888d84115f2811'
+
+Step 2: Read the random nonce from the device
+  Read characteristic FBDE0001 (SERVICE_SYSTEM_RANDOMKEY_UUID)
+  from service FBDE0000 (SERVICE_SYSTEM_UUID)
+
+Step 3: Decode the nonce
+  rawNonce = base64Decode(bleResponse.value)
+  nonceHex = aesjs.utils.hex.fromBytes(reverseBytes(rawNonce))
+  // The nonce bytes are reversed (little-endian BLE to big-endian)
+
+Step 4: Get the stored shared key
+  sharedKeyHex = device._deviceModel.sharedKey
+  // This was stored during the association process
+
+Step 5: Concatenate shared key + nonce
+  plaintext = sharedKeyHex + nonceHex
+  // This creates the hex string to encrypt
+  // e.g. if sharedKey="0123456789abcdef" and nonce="a1b2c3d4e5f60708"
+  //      then plaintext="0123456789abcdefa1b2c3d4e5f60708"
+
+Step 6: Set up AES-128-ECB with PRIVATE_KEY as the encryption key
+  keyBytes = aesjs.utils.hex.toBytes(PRIVATE_KEY)
+  // keyBytes = hex decode of '1141a80537444a6a85888d84115f2811'
+  // = [0x11, 0x41, 0xa8, 0x05, 0x37, 0x44, 0x4a, 0x6a,
+  //    0x85, 0x88, 0x8d, 0x84, 0x11, 0x5f, 0x28, 0x11]
+  aesEcb = new aesjs.ModeOfOperation.ecb(keyBytes)
+
+Step 7: Encrypt the plaintext
+  plaintextBytes = aesjs.utils.hex.toBytes(plaintext)
+  // The plaintext must be a multiple of 16 bytes for ECB mode
+  encryptedBytes = aesEcb.encrypt(plaintextBytes)
+
+Step 8: Reverse the encrypted bytes and wrap as Buffer
+  resultBuffer = Buffer.from(reverseBytes(encryptedBytes))
+  // The result bytes are reversed back to little-endian for BLE
+
+Step 9: Write the result to the device
+  Write resultBuffer.toString('base64') to
+  characteristic FBDE0003 (SERVICE_SYSTEM_ENCRYPTKEY_UUID)
+  of service FBDE0000 (SERVICE_SYSTEM_UUID)
+  using writeCharacteristicWithResponseForService
+
+================================================================================
+5. IDENTIFICATION PROCESS
+================================================================================
+
+Source: Function #14340 -> #14343 -> #14344
+
+After authentication, the app reads device identity:
+  - Promise.all([
+      read SERVICE_DEVICE_MODELNUMBER_UUID (2A24) from 180A,
+      read SERVICE_DEVICE_SERIALNUMBER_UUID (2A25) from 180A,
+      read SERVICE_DEVICE_FIRMWAREVERSION_UUID (2A26) from 180A
+    ])
+  - Sets _deviceModel.modelNumber (cleaned with regex [^0-9a-z+], toUpperCase)
+  - Sets _deviceModel.serialNumber (cleaned, UTF-8 decoded)
+  - Sets _deviceModel.firmwareVersion (cleaned with [^0-9a-z+.])
+
+================================================================================
+6. KEY CONSTANTS
+================================================================================
+
+PRIVATE_KEY (AES-128 encryption key, hardcoded):
+  '1141a80537444a6a85888d84115f2811'
+
+  As bytes: [0x11, 0x41, 0xA8, 0x05, 0x37, 0x44, 0x4A, 0x6A,
+             0x85, 0x88, 0x8D, 0x84, 0x11, 0x5F, 0x28, 0x11]
+
+This is a 16-byte (128-bit) key used for AES-128-ECB encryption.
+It is the SAME key for ALL devices of this product line.
+
+The sharedKey is per-device, exchanged during association (pairing).
+It is read from BLE characteristic FBDE0002 and stored locally.
+
+================================================================================
+7. COMPLETE AUTHENTICATION PSEUDOCODE
+================================================================================
+
+function authorisationProcess(device):
+    // Constants
+    PRIVATE_KEY = "1141a80537444a6a85888d84115f2811"
+
+    // Step 1: Read nonce from device
+    nonceCharacteristic = device.readCharacteristic(
+        service="FBDE0000-4C7B-4E67-8292-A9B8E686CF87",
+        characteristic="FBDE0001-4C7B-4E67-8292-A9B8E686CF87"
+    )
+
+    // Step 2: Decode nonce (BLE little-endian -> big-endian hex)
+    nonceRaw = base64Decode(nonceCharacteristic.value)
+    nonceHex = bytesToHex(reverse(nonceRaw))
+
+    // Step 3: Get stored shared key
+    sharedKeyHex = device.sharedKey  // stored from association
+
+    // Step 4: Build plaintext = sharedKey || nonce (concatenated hex strings)
+    plaintextHex = sharedKeyHex + nonceHex
+
+    // Step 5: Encrypt with AES-128-ECB
+    aesKey = hexToBytes(PRIVATE_KEY)
+    aes = new AES_ECB(aesKey)
+    plaintextBytes = hexToBytes(plaintextHex)
+    encryptedBytes = aes.encrypt(plaintextBytes)
+
+    // Step 6: Write response (big-endian -> BLE little-endian)
+    responseBuffer = reverse(encryptedBytes)
+    responseBase64 = base64Encode(responseBuffer)
+
+    device.writeCharacteristic(
+        service="FBDE0000-4C7B-4E67-8292-A9B8E686CF87",
+        characteristic="FBDE0003-4C7B-4E67-8292-A9B8E686CF87",
+        value=responseBase64
+    )
+
+================================================================================
+8. IMPORTANT NOTES
+================================================================================
+
+a) Byte Ordering: All BLE values are reversed. When reading from BLE,
+   bytes are reversed before conversion to hex. When writing back to BLE,
+   the encrypted bytes are reversed before encoding to base64.
+
+b) The "nonce" read from FBDE0001 may not always be exactly 5 bytes.
+   The code doesn't enforce a specific length - it just reads whatever
+   the device provides. The MQTT version reads it as a hex string in
+   the 'Data' field of the response.
+
+c) Plaintext padding: The concatenation of sharedKey (hex) + nonce (hex)
+   must result in exactly 16 bytes (32 hex chars) for single-block ECB.
+   If sharedKey is 8 bytes (16 hex chars) and nonce is 8 bytes (16 hex chars),
+   this gives exactly 16 bytes of plaintext = 1 AES block.
+
+   However, if the total is not a multiple of 16 bytes, the aes-js library's
+   ECB encrypt function processes 16-byte blocks in a loop, so it would
+   handle multi-block inputs too.
+
+d) The sharedKey is 8 bytes (16 hex chars)
+   (16 hex chars). If the nonce is also 8 bytes, the plaintext is exactly
+   16 bytes = 1 AES-128-ECB block.
+
+e) AES library: The app uses the 'aes-js' npm package (identifier: _aesjs).
+   Specifically: aesjs.ModeOfOperation.ecb for encryption.
+   Helper functions: aesjs.utils.hex.toBytes() and aesjs.utils.hex.fromBytes()
+
+f) The MQTT version uses the same algorithm but communicates via MQTT topics
+   instead of BLE characteristics. The nonce is read as a hex string from
+   the 'Data' field in the MQTT response and reversed the same way.
+
+g) There is NO "deviceSalt" involved in the authentication. The string
+   "deviceSalt" in the APK refers to a PNG image asset (UI icon), not
+   a cryptographic salt. The authentication uses only:
+   - PRIVATE_KEY (hardcoded)
+   - sharedKey (from BLE characteristic, per-device)
+   - nonce/randomKey (from BLE characteristic, per-session)

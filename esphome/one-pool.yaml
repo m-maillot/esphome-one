@@ -1,0 +1,103 @@
+##############################################################
+# ESPHome - One Pool BLE Bridge
+#
+# Pilote un module On.e (piscine) via BLE depuis un ESP32
+# et l'expose en WiFi pour Home Assistant.
+#
+# Configuration requise dans secrets.yaml :
+#   wifi_ssid / wifi_password  - votre reseau WiFi
+#   api_key                    - cle API ESPHome (generee)
+#   ota_password               - mot de passe OTA
+#   one_mac_address            - adresse MAC BLE du device On.e
+#   one_shared_key             - SharedKey du device (16 hex)
+#
+# Pour obtenir la SharedKey, utilisez la page de test BLE
+# fournie dans le projet (ble-test.html) :
+#   1. Mettez le device On.e en mode appairage
+#   2. Scannez et connectez-vous
+#   3. La SharedKey s'affiche automatiquement
+#   4. Copiez-la dans secrets.yaml
+##############################################################
+
+esphome:
+  name: one-pool
+  friendly_name: "Piscine On.e"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# WiFi - adapter dans secrets.yaml
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "One-Pool-Fallback"
+    password: "configpool"
+
+captive_portal:
+
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# Composant BLE
+esp32_ble_tracker:
+
+ble_client:
+  - mac_address: !secret one_mac_address
+    id: one_ble_client
+
+# Composant custom One Pool
+external_components:
+  - source:
+      type: local
+      path: components
+
+one_pool:
+  id: one_pool_client
+  ble_client_id: one_ble_client
+  shared_key: !secret one_shared_key
+
+# Switches exposes a Home Assistant
+switch:
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: pump
+    name: "Pompe Piscine"
+    icon: "mdi:pump"
+
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: light
+    name: "Lumiere Piscine"
+    icon: "mdi:pool"
+
+# Binary sensors (lecture seule du statut)
+binary_sensor:
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: pump
+    name: "Pompe Piscine Statut"
+    device_class: running
+    icon: "mdi:pump"
+
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: light
+    name: "Lumiere Piscine Statut"
+    device_class: light
+    icon: "mdi:pool"
+
+# Optionnel: bouton restart
+button:
+  - platform: restart
+    name: "Redemarrer ESP32"

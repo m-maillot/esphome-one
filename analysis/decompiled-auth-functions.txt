@@ -1,0 +1,737 @@
+================================================================================
+Raw Decompiled Output of Key Authentication Functions
+================================================================================
+
+================================================================================
+1. BLE Service Setup (UUID and PRIVATE_KEY initialization)
+================================================================================
+                r4 = r4.TinyEmitter;
+                r5 = r4.prototype;
+                r5 = Object.create(r5, {constructor: {value: r4}});
+                r9 = r5;
+                r4 = new r9[r4](r8);
+                r4 = r4 instanceof Object ? r4 : r5;
+                r2['onDataChange'] = r4;
+                r4 = {};
+                r2['_scanDevicesHistory'] = r4;
+                r4 = 'FBDE0100-4C7B-4E67-8292-A9B8E686CF87';
+                r2['ADVERTISING_SERVICE_UUID_ASSOCIATION'] = r4;
+                r4 = 'FBDE0000-4C7B-4E67-8292-A9B8E686CF87';
+                r2['ADVERTISING_SERVICE_UUID_USE'] = r4;
+                r2['SERVICE_SYSTEM_UUID'] = r4;
+                r4 = 'FBDE0002-4C7B-4E67-8292-A9B8E686CF87';
+                r2['SERVICE_SYSTEM_SHAREDKEY_UUID'] = r4;
+                r4 = 'FBDE0003-4C7B-4E67-8292-A9B8E686CF87';
+                r2['SERVICE_SYSTEM_ENCRYPTKEY_UUID'] = r4;
+                r4 = 'FBDE0001-4C7B-4E67-8292-A9B8E686CF87';
+                r2['SERVICE_SYSTEM_RANDOMKEY_UUID'] = r4;
+                r4 = '180A';
+                r2['SERVICE_DEVICE_UUID'] = r4;
+                r4 = '2A24';
+                r2['SERVICE_DEVICE_MODELNUMBER_UUID'] = r4;
+                r4 = '2A25';
+                r2['SERVICE_DEVICE_SERIALNUMBER_UUID'] = r4;
+                r4 = '2A26';
+                r2['SERVICE_DEVICE_FIRMWAREVERSION_UUID'] = r4;
+                r4 = '1805';
+                r2['SERVICE_TIME_UUID'] = r4;
+                r4 = '2A08';
+                r2['SERVICE_TIME_DATETIME_UUID'] = r4;
+                r4 = '2A09';
+                r2['SERVICE_TIME_DAY_UUID'] = r4;
+                r4 = '1141a80537444a6a85888d84115f2811';
+                r2['PRIVATE_KEY'] = r4;
+                r4 = '1D14D6EE-FD63-4FA1-BFA4-8F47B42119F0';
+                r2['SERVICE_OTA'] = r4;
+                r4 = 'F7BF3564-FB6D-4E53-88A4-5E37E0326063';
+                r2['SERVICE_OTA_CONTROL'] = r4;
+                r4 = '984227F3-34FC-4045-A5D0-2C581F81A153';
+
+================================================================================
+2. associationProcess (BLE) - Reading shared key
+================================================================================
+            r6 = 'associationProcess';
+            r4['key'] = r6;
+            r6 = function() { // Environment: r5
+                r1 = _closure1_slot0;
+                r3 = r1.default;
+                r2 = undefined;
+                r1 = function* () { // Environment: r0
+                    r0 = function* () { // Original name: ?anon_0_, environment: r0
+                        _fun14326: for(var _fun14326_ip = 0; ; ) switch(_fun14326_ip) {
+case 0:
+                            StartGenerator();
+                            ResumeGenerator(result_out_reg=0, return_bool_out_reg=2);
+                            if(r2) { _fun14326_ip = 51; continue _fun14326 }
+case 9:
+                            r2 = this;
+                            var _closure5_slot0 = r2;
+                            r2 = global;
+                            r3 = r2.Promise;
+                            r2 = r3.prototype;
+                            r2 = Object.create(r2, {constructor: {value: r3}});
+                            r4 = function(a0, a1) { // Environment: r1
+                                r1 = a0;
+                                var _closure6_slot0 = r1;
+                                r1 = a1;
+                                var _closure6_slot1 = r1;
+                                r1 = _closure5_slot0;
+                                r4 = r1._device;
+                                r3 = r4.readCharacteristicForService;
+                                r2 = r1.SERVICE_SYSTEM_UUID;
+                                r1 = r1.SERVICE_SYSTEM_SHAREDKEY_UUID;
+                                r3 = r3.bind(r4)(r2, r1);
+                                r2 = r3.then;
+                                r1 = function(a0) { // Environment: r0
+                                    r0 = a0;
+                                    r1 = _closure5_slot0;
+                                    r3 = r1._deviceModel;
+                                    r1 = _closure1_slot9;
+                                    r5 = r1.Buffer;
+                                    r4 = r5.from;
+                                    r2 = r0.value;
+                                    r6 = 'base64';
+                                    r4 = r4.bind(r5)(r2, r6);
+                                    r2 = r4.reverse;
+                                    r5 = r2.bind(r4)();
+                                    r2 = r5.toString;
+                                    r4 = 'hex';
+                                    r2 = r2.bind(r5)(r4);
+                                    r3['sharedKey'] = r2;
+                                    r2 = global;
+                                    r3 = r2.console;
+                                    r2 = r3.log;
+                                    r5 = r1.Buffer;
+                                    r1 = r5.from;
+                                    r0 = r0.value;
+                                    r1 = r1.bind(r5)(r0, r6);
+                                    r0 = r1.reverse;
+                                    r1 = r0.bind(r1)();
+                                    r0 = r1.toString;
+                                    r1 = r0.bind(r1)(r4);
+                                    r0 = 'SHARED KEY (associationProcess):';
+                                    r0 = r2.bind(r3)(r0, r1);
+                                    r2 = _closure6_slot0;
+                                    r0 = undefined;
+                                    r1 = true;
+                                    r1 = r2.bind(r0)(r1);
+                                    return r0;
+                                };
+                                r2 = r2.bind(r3)(r1);
+                                r1 = r2.catch;
+                                r0 = function(a0) { // Environment: r0
+                                    r2 = _closure6_slot1;
+                                    r0 = a0;
+                                    r1 = r0.message;
+                                    r0 = undefined;
+                                    r1 = r2.bind(r0)(r1);
+                                    return r0;
+                                };
+                                r0 = r1.bind(r2)(r0);
+                                r0 = undefined;
+                                return r0;
+                            };
+                            r5 = r2;
+                            r1 = new r5[r3](r4, r3);
+                            r1 = r1 instanceof Object ? r1 : r2;
+                            return r1;
+case 51:
+                            return r0;
+                        }
+                    };
+                    return r0;
+                };
+                r1 = r3.bind(r2)(r1);
+                var _closure3_slot0 = r1;
+                r0 = function() { // Original name: associationProcess, environment: r0
+                    r0 = undefined;
+                    r3 = _closure3_slot0;
+                    r2 = r3.apply;
+                    r0 = arguments;
+                    r1 = r0;
+                    r0 = this;
+                    r0 = r2.bind(r3)(r0, r1);
+
+================================================================================
+3. authorisationProcess (BLE) - THE AUTH ALGORITHM
+================================================================================
+            r6 = 'authorisationProcess';
+            r4['key'] = r6;
+            r6 = function() { // Environment: r5
+                r1 = _closure1_slot0;
+                r3 = r1.default;
+                r2 = undefined;
+                r1 = function* () { // Environment: r0
+                    r0 = function* () { // Original name: ?anon_0_, environment: r0
+                        _fun14333: for(var _fun14333_ip = 0; ; ) switch(_fun14333_ip) {
+case 0:
+                            StartGenerator();
+                            ResumeGenerator(result_out_reg=0, return_bool_out_reg=2);
+                            if(r2) { _fun14333_ip = 51; continue _fun14333 }
+case 9:
+                            r2 = this;
+                            var _closure5_slot0 = r2;
+                            r2 = global;
+                            r3 = r2.Promise;
+                            r2 = r3.prototype;
+                            r2 = Object.create(r2, {constructor: {value: r3}});
+                            r4 = function(a0, a1) { // Environment: r1
+                                r1 = a0;
+                                var _closure6_slot0 = r1;
+                                r1 = a1;
+                                var _closure6_slot1 = r1;
+                                r1 = _closure5_slot0;
+                                r2 = r1.PRIVATE_KEY;
+                                var _closure6_slot2 = r2;
+                                r4 = r1._device;
+                                r3 = r4.readCharacteristicForService;
+                                r2 = r1.SERVICE_SYSTEM_UUID;
+                                r1 = r1.SERVICE_SYSTEM_RANDOMKEY_UUID;
+                                r3 = r3.bind(r4)(r2, r1);
+                                r2 = r3.then;
+                                r1 = function(a0) { // Environment: r0
+                                    r2 = _closure1_slot9;
+                                    r5 = r2.Buffer;
+                                    r4 = r5.from;
+                                    r3 = a0;
+                                    r3 = r3.value;
+                                    r7 = 'base64';
+                                    r6 = r4.bind(r5)(r3, r7);
+                                    r3 = _closure1_slot17;
+                                    r1 = r3.utils;
+                                    r5 = r1.hex;
+                                    r4 = r5.fromBytes;
+                                    r1 = r6.reverse;
+                                    r1 = r1.bind(r6)();
+                                    r5 = r4.bind(r5)(r1);
+                                    r1 = _closure5_slot0;
+                                    r4 = r1._deviceModel;
+                                    r4 = r4.sharedKey;
+                                    r6 = global;
+                                    r9 = r6.console;
+                                    r8 = r9.log;
+                                    r6 = 'SHARED KEY :';
+                                    r6 = r8.bind(r9)(r6, r4);
+                                    r8 = r4 + r5;
+                                    r4 = r3.ModeOfOperation;
+                                    r6 = r4.ecb;
+                                    r4 = r3.utils;
+                                    r9 = r4.hex;
+                                    r5 = r9.toBytes;
+                                    r4 = _closure6_slot2;
+                                    r12 = r5.bind(r9)(r4);
+                                    r5 = r6.prototype;
+                                    r5 = Object.create(r5, {constructor: {value: r6}});
+                                    r13 = r5;
+                                    r4 = new r13[r6](r12, r11);
+                                    r5 = r4 instanceof Object ? r4 : r5;
+                                    r4 = r5.encrypt;
+                                    r3 = r3.utils;
+                                    r6 = r3.hex;
+                                    r3 = r6.toBytes;
+                                    r3 = r3.bind(r6)(r8);
+                                    r3 = r4.bind(r5)(r3);
+                                    r4 = r2.Buffer;
+                                    r2 = r3.reverse;
+                                    r12 = r2.bind(r3)();
+                                    r3 = r4.prototype;
+                                    r3 = Object.create(r3, {constructor: {value: r4}});
+                                    r13 = r3;
+                                    r2 = new r13[r4](r12, r11);
+                                    r6 = r2 instanceof Object ? r2 : r3;
+                                    r5 = r1._device;
+                                    r4 = r5.writeCharacteristicWithResponseForService;
+                                    r3 = r1.SERVICE_SYSTEM_UUID;
+                                    r2 = r1.SERVICE_SYSTEM_ENCRYPTKEY_UUID;
+                                    r1 = r6.toString;
+                                    r1 = r1.bind(r6)(r7);
+                                    r3 = r4.bind(r5)(r3, r2, r1);
+                                    r2 = r3.then;
+                                    r1 = function() { // Environment: r0
+                                        r2 = _closure6_slot0;
+                                        r0 = undefined;
+                                        r1 = true;
+                                        r1 = r2.bind(r0)(r1);
+                                        return r0;
+                                    };
+                                    r2 = r2.bind(r3)(r1);
+                                    r1 = r2.catch;
+                                    r0 = function(a0) { // Environment: r0
+                                        r2 = _closure6_slot1;
+                                        r0 = a0;
+                                        r1 = r0.message;
+                                        r0 = undefined;
+                                        r1 = r2.bind(r0)(r1);
+                                        return r0;
+                                    };
+                                    r0 = r1.bind(r2)(r0);
+                                    r0 = undefined;
+                                    return r0;
+                                };
+                                r2 = r2.bind(r3)(r1);
+                                r1 = r2.catch;
+                                r0 = function(a0) { // Environment: r0
+                                    r2 = _closure6_slot1;
+                                    r0 = a0;
+                                    r1 = r0.message;
+                                    r0 = undefined;
+                                    r1 = r2.bind(r0)(r1);
+                                    return r0;
+                                };
+                                r0 = r1.bind(r2)(r0);
+                                r0 = undefined;
+                                return r0;
+                            };
+                            r5 = r2;
+                            r1 = new r5[r3](r4, r3);
+                            r1 = r1 instanceof Object ? r1 : r2;
+                            return r1;
+case 51:
+                            return r0;
+                        }
+                    };
+                    return r0;
+                };
+                r1 = r3.bind(r2)(r1);
+                var _closure3_slot0 = r1;
+                r0 = function() { // Original name: authorisationProcess, environment: r0
+                    r0 = undefined;
+                    r3 = _closure3_slot0;
+                    r2 = r3.apply;
+                    r0 = arguments;
+                    r1 = r0;
+                    r0 = this;
+                    r0 = r2.bind(r3)(r0, r1);
+
+================================================================================
+4. identificationProcess (BLE) - Device identification
+================================================================================
+            r6 = 'identificationProcess';
+            r4['key'] = r6;
+            r6 = function() { // Environment: r5
+                r1 = _closure1_slot0;
+                r3 = r1.default;
+                r2 = undefined;
+                r1 = function* () { // Environment: r0
+                    r0 = function* () { // Original name: ?anon_0_, environment: r0
+                        _fun14342: for(var _fun14342_ip = 0; ; ) switch(_fun14342_ip) {
+case 0:
+                            StartGenerator();
+                            ResumeGenerator(result_out_reg=0, return_bool_out_reg=2);
+                            if(r2) { _fun14342_ip = 51; continue _fun14342 }
+case 9:
+                            r2 = this;
+                            var _closure5_slot0 = r2;
+                            r2 = global;
+                            r3 = r2.Promise;
+                            r2 = r3.prototype;
+                            r2 = Object.create(r2, {constructor: {value: r3}});
+                            r4 = function(a0, a1) { // Environment: r1
+                                r1 = a0;
+                                var _closure6_slot0 = r1;
+                                r1 = a1;
+                                var _closure6_slot1 = r1;
+                                r1 = global;
+                                r3 = r1.Promise;
+                                r2 = r3.all;
+                                r4 = _closure5_slot0;
+                                r7 = r4._device;
+                                r6 = r7.readCharacteristicForService;
+                                r5 = r4.SERVICE_DEVICE_UUID;
+                                r1 = r4.SERVICE_DEVICE_MODELNUMBER_UUID;
+                                r5 = r6.bind(r7)(r5, r1);
+                                r1 = new Array(3);
+                                r1[0] = r5;
+                                r8 = r4._device;
+                                r7 = r8.readCharacteristicForService;
+                                r6 = r4.SERVICE_DEVICE_UUID;
+                                r5 = r4.SERVICE_DEVICE_SERIALNUMBER_UUID;
+                                r5 = r7.bind(r8)(r6, r5);
+                                r1[1] = r5;
+                                r7 = r4._device;
+                                r6 = r7.readCharacteristicForService;
+                                r5 = r4.SERVICE_DEVICE_UUID;
+                                r4 = r4.SERVICE_DEVICE_FIRMWAREVERSION_UUID;
+                                r4 = r6.bind(r7)(r5, r4);
+                                r1[2] = r4;
+                                r3 = r2.bind(r3)(r1);
+                                r2 = r3.then;
+                                r1 = function(a0) { // Environment: r0
+                                    r7 = a0;
+                                    r1 = _closure5_slot0;
+                                    r3 = r1._deviceModel;
+                                    r0 = _closure1_slot9;
+                                    r5 = r0.Buffer;
+                                    r4 = r5.from;
+                                    r2 = 0;
+                                    r2 = r7[r2];
+                                    r2 = r2.value;
+                                    r6 = 'base64';
+                                    r4 = r4.bind(r5)(r2, r6);
+                                    r2 = r4.toString;
+                                    r4 = r2.bind(r4)();
+                                    r2 = r4.toUpperCase;
+                                    r8 = r2.bind(r4)();
+                                    r5 = r8.replace;
+                                    r2 = /[^0-9a-z+]/gi;
+                                    r4 = '';
+                                    r2 = r5.bind(r8)(r2, r4);
+                                    r3['modelNumber'] = r2;
+                                    r5 = r1._deviceModel;
+                                    r8 = r0.Buffer;
+                                    r3 = r8.from;
+                                    r2 = 1;
+                                    r2 = r7[r2];
+                                    r2 = r2.value;
+                                    r8 = r3.bind(r8)(r2, r6);
+                                    r2 = r8.toString;
+                                    r3 = 'utf-8';
+                                    r9 = r2.bind(r8)(r3);
+                                    r8 = r9.replace;
+                                    r2 = /[^0-9a-z+]/gi;
+                                    r2 = r8.bind(r9)(r2, r4);
+                                    r5['serialNumber'] = r2;
+                                    r1 = r1._deviceModel;
+                                    r5 = r0.Buffer;
+                                    r2 = r5.from;
+                                    r0 = 2;
+                                    r0 = r7[r0];
+                                    r0 = r0.value;
+                                    r2 = r2.bind(r5)(r0, r6);
+                                    r0 = r2.toString;
+                                    r3 = r0.bind(r2)(r3);
+                                    r2 = r3.replace;
+                                    r0 = /[^0-9a-z+.]/gi;
+                                    r0 = r2.bind(r3)(r0, r4);
+                                    r1['firmwareVersion'] = r0;
+                                    r2 = _closure6_slot0;
+                                    r0 = undefined;
+                                    r1 = true;
+                                    r1 = r2.bind(r0)(r1);
+                                    return r0;
+                                };
+                                r2 = r2.bind(r3)(r1);
+                                r1 = r2.catch;
+                                r0 = function(a0) { // Environment: r0
+                                    r2 = _closure6_slot1;
+                                    r0 = a0;
+                                    r1 = r0.message;
+                                    r0 = undefined;
+                                    r1 = r2.bind(r0)(r1);
+                                    return r0;
+                                };
+                                r0 = r1.bind(r2)(r0);
+                                r0 = undefined;
+                                return r0;
+                            };
+                            r5 = r2;
+                            r1 = new r5[r3](r4, r3);
+                            r1 = r1 instanceof Object ? r1 : r2;
+                            return r1;
+case 51:
+                            return r0;
+                        }
+                    };
+                    return r0;
+                };
+                r1 = r3.bind(r2)(r1);
+                var _closure3_slot0 = r1;
+                r0 = function() { // Original name: identificationProcess, environment: r0
+                    r0 = undefined;
+                    r3 = _closure3_slot0;
+                    r2 = r3.apply;
+                    r0 = arguments;
+                    r1 = r0;
+                    r0 = this;
+
+================================================================================
+5. ModeOfOperationECB constructor
+================================================================================
+            };
+            r0['value'] = r2;
+            r2 = new Array(13);
+            r2[0] = r0;
+            r0 = {};
+            r5 = 'receiveAdvertisingData';
+            r0['key'] = r5;
+            r5 = function(a0, a1) { // Original name: receiveAdvertisingData, environment: r1
+                _fun16594: for(var _fun16594_ip = 0; ; ) switch(_fun16594_ip) {
+case 0:
+                    r2 = a0;
+                    r7 = a1;
+                    r0 = _closure1_slot4;
+                    r3 = r0.default;
+                    r0 = undefined;
+                    r4 = r3.bind(r0)();
+                    r3 = r4.toDate;
+                    r4 = r3.bind(r4)();
+                    r3 = r4.getTime;
+                    r3 = r3.bind(r4)();
+                    r2['advertisingCacheDataTime'] = r3;
+                    r3 = this;
+                    r5 = r3.advertisingCacheData;
+                    r3 = r7.toString;
+                    r4 = 'hex';
+                    r3 = r3.bind(r7)(r4);
+                    if(!(r5 === r3)) { _fun16594_ip = 129; continue _fun16594 }
+case 76:
+                    r5 = r2.networkState;
+                    r3 = _closure1_slot3;
+                    r3 = r3.DeviceConnectEnum;
+                    r3 = r3.InProximity;
+                    if(!(r5 != r3)) { _fun16594_ip = 1138; continue _fun16594 }
+case 103:
+                    r3 = _closure1_slot3;
+                    r3 = r3.DeviceConnectEnum;
+                    r3 = r3.InProximity;
+                    r2['networkState'] = r3;
+                    _fun16594_ip = 1138; continue _fun16594;
+case 129:
+                    r3 = r7.toString;
+                    r3 = r3.bind(r7)(r4);
+                    r2['advertisingCacheData'] = r3;
+                    r3 = r7.readUInt8;
+                    r13 = 0;
+                    r3 = r3.bind(r7)(r13);
+                    r2['statusProductionPower'] = r3;
+                    r3 = r7.readUInt8;
+                    r4 = 1;
+                    r3 = r3.bind(r7)(r4);
+                    r2['statusORPTarget'] = r3;
+                    r3 = r7.readUInt8;
+                    r12 = 2;
+                    r3 = r3.bind(r7)(r12);
+                    r2['statusORPMeasured'] = r3;
+                    r3 = r7.readUInt8;
+                    r11 = 3;
+                    r3 = r3.bind(r7)(r11);
+                    r2['statusPhTarget'] = r3;
+                    r3 = r7.readUInt8;
+                    r10 = 4;
+                    r3 = r3.bind(r7)(r10);
+                    r2['statusPhMeasured'] = r3;
+                    r3 = r7.readUInt8;
+                    r9 = 5;
+                    r3 = r3.bind(r7)(r9);
+                    r2['statusPhLiquidVolume'] = r3;
+                    r3 = r7.readUInt8;
+                    r8 = 6;
+                    r3 = r3.bind(r7)(r8);
+                    r2['statusClLiquidVolume'] = r3;
+
+================================================================================
+6. authorisationProcess (MQTT version)
+================================================================================
+521175:                r2['PRIVATE_KEY'] = r4;
+523275:                                r2 = r1.PRIVATE_KEY;
+559888:                    r2['PRIVATE_KEY'] = r4;
+562464:                                r9 = r4.PRIVATE_KEY;
+                                r4 = r5.log;
+                                r2 = {};
+                                r1 = r6.randomId;
+                                r2['Address TEL'] = r1;
+                                r1 = r6._deviceModel;
+                                r1 = r1.addressBLE;
+                                r2['Address BLE'] = r1;
+                                r1 = r6._deviceModel;
+                                r1 = r1.addressType;
+                                r2['Address type'] = r1;
+                                r1 = 'connectProcess';
+                                r1 = r4.bind(r5)(r1, r2);
+                                r5 = r6.waitResponse;
+                                r1 = r6.mqttParams;
+                                r2 = r1.scalewayConnectSerial;
+                                r1 = '/CRX/CONNEXION';
+                                r4 = r2 + r1;
+                                r2 = {};
+                                r1 = r6.randomId;
+                                r2['Address TEL'] = r1;
+                                r1 = r6._deviceModel;
+                                r1 = r1.addressBLE;
+                                r2['Address BLE'] = r1;
+                                r1 = r6._deviceModel;
+                                r1 = r1.addressType;
+                                r2['Address type'] = r1;
+                                r1 = 5000;
+                                r1 = r5.bind(r6)(r4, r2, r1);
+                                SaveGenerator(address=172);
+case 170:
+                                return r1;
+case 172:
+                                ResumeGenerator(result_out_reg=1, return_bool_out_reg=2);
+                                if(r2) { _fun15436_ip = 368; continue _fun15436 }
+case 181:
+                                r5 = r3.console;
+                                r4 = r5.log;
+                                r2 = 'connectProcess MQTT Result';
+                                r2 = r4.bind(r5)(r2, r1);
+                                r2 = null;
+                                if(!(r1 != r2)) { _fun15436_ip = 297; continue _fun15436 }
+case 208:
+                                r2 = r1.Number;
+                                if(r2) { _fun15436_ip = 288; continue _fun15436 }
+case 217:
+                                r2 = _closure1_slot7;
+                                r5 = r2.wait;
+                                r4 = undefined;
+                                r2 = 500;
+                                r2 = r5.bind(r4)(r2);
+                                SaveGenerator(address=247);
+case 245:
+                                return r2;
+case 247:
+                                ResumeGenerator(result_out_reg=2, return_bool_out_reg=4);
+                                if(r4) { _fun15436_ip = 285; continue _fun15436 }
+case 253:
+                                r6 = r3.Error;
+                                r4 = r6.prototype;
+                                r5 = Object.create(r4, {constructor: {value: r6}});
+                                r9 = 'connexion Error';
+                                r10 = r5;
+                                r4 = new r10[r6](r9, r8);
+                                r4 = r4 instanceof Object ? r4 : r5;
+                                throw r4;
+case 285:
+                                return r2;
+case 288:
+                                r2 = r1.Number;
+                                return r2;
+case 297:
+                                r2 = _closure1_slot7;
+                                r5 = r2.wait;
+                                r4 = undefined;
+                                r2 = 500;
+                                r2 = r5.bind(r4)(r2);
+                                SaveGenerator(address=327);
+case 325:
+                                return r2;
+case 327:
+                                ResumeGenerator(result_out_reg=2, return_bool_out_reg=4);
+                                if(r4) { _fun15436_ip = 365; continue _fun15436 }
+case 333:
+                                r5 = r3.Error;
+                                r3 = r5.prototype;
+                                r4 = Object.create(r3, {constructor: {value: r5}});
+                                r9 = 'connexion Error';
+                                r10 = r4;
+                                r3 = new r10[r5](r9, r8);
+                                r3 = r3 instanceof Object ? r3 : r4;
+                                throw r3;
+case 365:
+                                return r2;
+case 368:
+                                return r1;
+case 371:
+                                return r0;
+                            }
+                        };
+                        return r0;
+                    };
+                    r1 = r3.bind(r2)(r1);
+                    var _closure3_slot0 = r1;
+                    r0 = function() { // Original name: connectProcess, environment: r0
+                        r0 = undefined;
+                        r3 = _closure3_slot0;
+                        r2 = r3.apply;
+                        r0 = arguments;
+                        r1 = r0;
+                        r0 = this;
+                        r0 = r2.bind(r3)(r0, r1);
+                        return r0;
+                    };
+                    return r0;
+                };
+                r6 = r6.bind(r1)();
+                r4['value'] = r6;
+                r0[8] = r4;
+                r4 = {};
+                r6 = 'disconnectProcess';
+                r4['key'] = r6;
+                r6 = function() { // Environment: r5
+                    r1 = _closure1_slot0;
+                    r3 = r1.default;
+                    r2 = undefined;
+                    r1 = function* () { // Environment: r0
+                        r0 = function* () { // Original name: ?anon_0_, environment: r0
+                            _fun15440: for(var _fun15440_ip = 0; ; ) switch(_fun15440_ip) {
+case 0:
+                                StartGenerator();
+                                r5 = this;
+                                ResumeGenerator(result_out_reg=0, return_bool_out_reg=1);
+                                if(r1) { _fun15440_ip = 141; continue _fun15440 }
+case 12:
+                                r1 = r5._device;
+                                if(!r1) { _fun15440_ip = 128; continue _fun15440 }
+case 21:
+                                r1 = r5._device;
+                                r1 = r1.num;
+                                if(!r1) { _fun15440_ip = 128; continue _fun15440 }
+case 36:
+                                r4 = r5.waitResponse;
+                                r1 = r5.mqttParams;
+                                r2 = r1.scalewayConnectSerial;
+                                r1 = '/CRX/';
+                                r2 = r2 + r1;
+                                r1 = r5._device;
+                                r1 = r1.num;
+                                r2 = r2 + r1;
+                                r3 = {};
+                                r1 = r5.randomId;
+                                r3['Address TEL'] = r1;
+                                r1 = '/DECONNEXION';
+                                r2 = r2 + r1;
+                                r1 = 500;
+                                r1 = r4.bind(r5)(r2, r3, r1);
+                                SaveGenerator(address=116);
+case 114:
+                                return r1;
+case 116:
+                                ResumeGenerator(result_out_reg=1, return_bool_out_reg=2);
+                                if(r2) { _fun15440_ip = 138; continue _fun15440 }
+case 122:
+                                r2 = null;
+                                if(!(r1 != r2)) { _fun15440_ip = 133; continue _fun15440 }
+case 128:
+                                r2 = true;
+                                return r2;
+case 133:
+                                r2 = false;
+                                return r2;
+case 138:
+                                return r1;
+case 141:
+                                return r0;
+                            }
+                        };
+                        return r0;
+                    };
+                    r1 = r3.bind(r2)(r1);
+                    var _closure3_slot0 = r1;
+                    r0 = function() { // Original name: disconnectProcess, environment: r0
+                        r0 = undefined;
+                        r3 = _closure3_slot0;
+                        r2 = r3.apply;
+                        r0 = arguments;
+                        r1 = r0;
+                        r0 = this;
+                        r0 = r2.bind(r3)(r0, r1);
+                        return r0;
+                    };
+                    return r0;
+                };
+                r6 = r6.bind(r1)();
+                r4['value'] = r6;
+                r0[9] = r4;
+                r4 = {};
+                r6 = 'associationProcess';
+                r4['key'] = r6;
+                r6 = function() { // Environment: r5
+                    r1 = _closure1_slot0;
+                    r3 = r1.default;
+                    r2 = undefined;
+                    r1 = function* () { // Environment: r0
+                        r0 = function* () { // Original name: ?anon_0_, environment: r0
+                            _fun15444: for(var _fun15444_ip = 0; ; ) switch(_fun15444_ip) {
+case 0:
+                                StartGenerator();
+                                r2 = this;
