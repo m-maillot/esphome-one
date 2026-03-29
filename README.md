@@ -52,12 +52,15 @@ Le module On.e gere l'allumage/extinction de la pompe et de l'eclairage de pisci
 
 Chaque module On.e possede une **SharedKey** unique echangee lors du premier appairage. Vous devez la recuperer une seule fois.
 
-Ouvrez l'**[outil BLE en ligne](https://m-maillot.github.io/esphome-one/test-ble.html)** sur Chrome Android :
+> ⚠️ **Important** : Le module On.e doit etre en **mode appairage** pour que la SharedKey puisse etre lue. Appuyez sur le **bouton physique** du module dans votre tableau electrique jusqu'a ce que le voyant clignote.
 
-1. Mettez le module On.e en **mode appairage** (bouton physique sur le module)
-2. Cliquez sur **Scanner** et selectionnez votre device
-3. La SharedKey s'affiche automatiquement — copiez-la
+Ouvrez l'**[outil BLE en ligne](https://m-maillot.github.io/esphome-one/test-ble.html)** sur **Chrome Android** (Web Bluetooth requis) :
+
+1. Mettez le module On.e en **mode appairage** (bouton physique, voyant clignotant)
+2. Cliquez sur **Connecter** et selectionnez votre device
+3. La **SharedKey** s'affiche automatiquement — copiez-la
 4. Notez aussi l'**adresse MAC** du device (visible lors du scan)
+5. Vous pouvez tester les controles (pompe / lumiere) pour verifier le bon fonctionnement
 
 ### 2. Configurer ESPHome
 

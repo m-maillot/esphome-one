@@ -52,6 +52,23 @@ details summary { font-size: 0.85em; color: #aaa; cursor: pointer; }
 <h1>On.e BLE Test</h1>
 <div id="statusBar" class="status-bar status-disconnected">Deconnecte</div>
 
+<!-- Instructions -->
+<section style="background:#1a1a2e;border:1px solid #f39c12;border-radius:12px;">
+  <h2 style="color:#f39c12;">⚠️ Premiere utilisation</h2>
+  <p style="font-size:0.85em;color:#ccc;line-height:1.5;margin-top:6px;">
+    Pour recuperer la <strong>SharedKey</strong> de votre module, vous devez d'abord le mettre en <strong>mode appairage</strong> :
+  </p>
+  <ol style="font-size:0.85em;color:#ccc;line-height:1.8;margin-top:6px;padding-left:20px;">
+    <li>Appuyez sur le <strong>bouton physique</strong> du module On.e dans votre tableau electrique jusqu'a ce que le voyant clignote</li>
+    <li>Cliquez sur <strong>Connecter</strong> ci-dessous et selectionnez votre device</li>
+    <li>La <strong>SharedKey</strong> s'affiche automatiquement en bas de page — notez-la</li>
+    <li>Vous pouvez ensuite tester les controles (pompe / lumiere)</li>
+  </ol>
+  <p style="font-size:0.8em;color:#888;margin-top:6px;">
+    💡 La SharedKey ne doit etre recuperee qu'<strong>une seule fois</strong>. Elle est sauvegardee dans le navigateur.
+  </p>
+</section>
+
 <!-- Connexion -->
 <section>
   <button id="btnConnect" class="btn btn-primary btn-full" onclick="doConnect()">Connecter</button>
