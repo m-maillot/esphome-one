@@ -2,6 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/ble_client/ble_client.h"
+#include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include <array>
@@ -10,15 +11,17 @@
 namespace esphome {
 namespace one_pool {
 
+using namespace esp32_ble_tracker;
+
 // BLE UUIDs
-static const espbt::ESPBTUUID UUID_SYSTEM = espbt::ESPBTUUID::from_raw("fbde0000-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_RANDOMKEY = espbt::ESPBTUUID::from_raw("fbde0001-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_ENCRYPTKEY = espbt::ESPBTUUID::from_raw("fbde0003-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_SVC_DEVICE = espbt::ESPBTUUID::from_raw("fbde0100-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_CONTROL = espbt::ESPBTUUID::from_raw("fbde0101-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_STATUS = espbt::ESPBTUUID::from_raw("fbde0104-4c7b-4e67-8292-a9b8e686cf87");
-static const espbt::ESPBTUUID UUID_TIME_SVC = espbt::ESPBTUUID::from_uint16(0x1805);
-static const espbt::ESPBTUUID UUID_DATETIME = espbt::ESPBTUUID::from_uint16(0x2A08);
+static const ESPBTUUID UUID_SYSTEM = ESPBTUUID::from_raw("fbde0000-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_RANDOMKEY = ESPBTUUID::from_raw("fbde0001-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_ENCRYPTKEY = ESPBTUUID::from_raw("fbde0003-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_SVC_DEVICE = ESPBTUUID::from_raw("fbde0100-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_CONTROL = ESPBTUUID::from_raw("fbde0101-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_STATUS = ESPBTUUID::from_raw("fbde0104-4c7b-4e67-8292-a9b8e686cf87");
+static const ESPBTUUID UUID_TIME_SVC = ESPBTUUID::from_uint16(0x1805);
+static const ESPBTUUID UUID_DATETIME = ESPBTUUID::from_uint16(0x2A08);
 
 // ============================================================
 // AES-128-ECB (minimal, no dependencies)

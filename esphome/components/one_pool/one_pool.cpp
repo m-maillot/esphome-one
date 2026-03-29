@@ -268,6 +268,13 @@ void OnePoolClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
           ESP_LOGE(TAG, "Failed to write auth response: %d", status);
         }
       }
+      // Handle initial status read response
+      else if (param->read.handle == this->handle_status_ && this->state_ == State::READY) {
+        if (param->read.value_len >= 1) {
+          ESP_LOGI(TAG, "Initial status read: 0x%02x", param->read.value[0]);
+          this->parse_status_(param->read.value[0]);
+        }
+      }
       break;
     }
 
@@ -284,7 +291,13 @@ void OnePoolClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         ESP_LOGI(TAG, "RTC synced");
         this->subscribe_status_();
       } else if (param->write.handle == this->handle_control_) {
-        ESP_LOGD(TAG, "Command written OK");
+        ESP_LOGD(TAG, "Command written OK, reading back status...");
+        // Read status to confirm actual device state
+        if (this->handle_status_) {
+          esp_ble_gattc_read_char(this->parent()->get_gattc_if(),
+                                  this->parent()->get_conn_id(),
+                                  this->handle_status_, ESP_GATT_AUTH_REQ_NONE);
+        }
       }
       break;
     }
@@ -296,10 +309,12 @@ void OnePoolClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         this->authenticated_ = true;
         ESP_LOGI(TAG, "=== READY ===");
 
-        // Read initial status
+        // Read initial status from FBDE0104 (status char, not control)
         esp_ble_gattc_read_char(this->parent()->get_gattc_if(),
                                 this->parent()->get_conn_id(),
-                                this->handle_control_, ESP_GATT_AUTH_REQ_NONE);
+                                this->handle_status_, ESP_GATT_AUTH_REQ_NONE);
+      } else if (param->reg_for_notify.status != ESP_GATT_OK) {
+        ESP_LOGE(TAG, "Failed to register notifications: status=%d", param->reg_for_notify.status);
       }
       break;
     }
@@ -458,6 +473,8 @@ void OnePoolSwitch::write_state(bool state) {
   bool pump = this->is_pump_ ? state : this->parent_->is_pump_on();
   bool light = this->is_pump_ ? this->parent_->is_light_on() : state;
   this->parent_->send_command(pump, light);
+  // Publish optimistic state so HA doesn't revert the toggle
+  this->publish_state(state);
 }
 
 }  // namespace one_pool

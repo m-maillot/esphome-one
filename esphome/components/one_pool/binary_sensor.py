@@ -25,3 +25,4 @@ async def to_code(config):
     parent = await cg.get_variable(config[CONF_ONE_POOL_ID])
     cg.add(var.set_parent(parent))
     cg.add(var.set_type(config[CONF_TYPE] == "pump"))
+    cg.add(parent.register_binary_sensor(var))
