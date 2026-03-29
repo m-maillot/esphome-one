@@ -51,7 +51,7 @@ Le module On.e gere l'allumage/extinction de la pompe et de l'eclairage de pisci
 
 Chaque module On.e possede une **SharedKey** unique echangee lors du premier appairage. Vous devez la recuperer une seule fois.
 
-Ouvrez l'**[outil BLE en ligne](https://www.racomach.fr/esphome-one/test-ble.html)** sur Chrome Android :
+Ouvrez l'**[outil BLE en ligne](https://m-maillot.github.io/esphome-one/test-ble.html)** sur Chrome Android :
 
 1. Mettez le module On.e en **mode appairage** (bouton physique sur le module)
 2. Cliquez sur **Scanner** et selectionnez votre device
