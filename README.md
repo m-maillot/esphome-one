@@ -36,6 +36,7 @@ Le module On.e gere l'allumage/extinction de la pompe et de l'eclairage de pisci
 │           ├── __init__.py    # Composant ESPHome (Python)
 │           ├── switch.py      # Plateforme switch
 │           ├── binary_sensor.py # Plateforme binary_sensor
+│           ├── sensor.py      # Plateforme sensor (diagnostic)
 │           ├── one_pool.h     # Code C++ (header)
 │           └── one_pool.cpp   # Code C++ (implementation BLE + AES)
 └── analysis/                  # Fichiers de reverse-engineering
@@ -92,12 +93,47 @@ Ou via le dashboard ESPHome de Home Assistant :
 
 Le device apparait automatiquement dans Home Assistant avec :
 
+#### Controles
+
 | Entite | Type | Description |
 |--------|------|-------------|
-| `switch.pompe_piscine` | Switch | Controle la pompe |
-| `switch.lumiere_piscine` | Switch | Controle l'eclairage |
-| `binary_sensor.pompe_piscine_statut` | Binary Sensor | Etat de la pompe |
-| `binary_sensor.lumiere_piscine_statut` | Binary Sensor | Etat de l'eclairage |
+| `switch.pompe_piscine` | Switch | Allumer / eteindre la pompe |
+| `switch.lumiere_piscine` | Switch | Allumer / eteindre l'eclairage |
+
+#### Statuts
+
+| Entite | Type | Description |
+|--------|------|-------------|
+| `binary_sensor.pompe_piscine_statut` | Binary Sensor | Etat reel de la pompe (via notification BLE) |
+| `binary_sensor.lumiere_piscine_statut` | Binary Sensor | Etat reel de l'eclairage (via notification BLE) |
+
+#### Diagnostic
+
+| Entite | Type | Description |
+|--------|------|-------------|
+| `binary_sensor.ble_connecte` | Binary Sensor (connectivity) | ON = ESP32 connecte et authentifie au module On.e |
+| `sensor.deconnexions_ble` | Sensor (total_increasing) | Nombre de deconnexions BLE depuis le dernier reboot |
+| `sensor.wifi_signal` | Sensor (dBm) | Force du signal WiFi de l'ESP32 |
+| `sensor.uptime` | Sensor (s) | Temps depuis le dernier redemarrage de l'ESP32 |
+
+#### Exemple d'automatisation : alerte perte de connexion
+
+```yaml
+automation:
+  - alias: "Alerte perte connexion BLE piscine"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ble_connecte
+        to: "off"
+        for: "00:05:00"
+    action:
+      - service: notify.mobile_app_votre_telephone
+        data:
+          title: "⚠️ Piscine"
+          message: "Connexion BLE perdue depuis 5 min. La pompe ne peut plus etre pilotee !"
+```
+
+> **Astuce placement** : utilisez le capteur `sensor.deconnexions_ble` pour trouver le meilleur emplacement de l'ESP32. Si le compteur monte rapidement, l'ESP32 est trop loin du module On.e.
 
 ## Modeles supportes
 
