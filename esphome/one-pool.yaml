@@ -100,6 +100,31 @@ binary_sensor:
     device_class: light
     icon: "mdi:pool"
 
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: ble_connected
+    name: "BLE Connecte"
+    device_class: connectivity
+    icon: "mdi:bluetooth-connect"
+
+# Capteurs de diagnostic
+sensor:
+  - platform: one_pool
+    one_pool_id: one_pool_client
+    type: ble_disconnects
+    name: "Deconnexions BLE"
+    icon: "mdi:bluetooth-off"
+    unit_of_measurement: ""
+    accuracy_decimals: 0
+    state_class: total_increasing
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "Uptime"
+
 # Optionnel: bouton restart
 button:
   - platform: restart

@@ -8,6 +8,7 @@ namespace one_pool {
 
 static const char *const TAG = "one_pool";
 
+
 // ============================================================
 // AES-128-ECB Implementation
 // ============================================================
@@ -123,6 +124,7 @@ void OnePoolClient::setup() {
   const uint8_t private_key[] = {0x11, 0x41, 0xa8, 0x05, 0x37, 0x44, 0x4a, 0x6a,
                                   0x85, 0x88, 0x8d, 0x84, 0x11, 0x5f, 0x28, 0x11};
   this->aes_.set_key(private_key);
+
   ESP_LOGI(TAG, "One Pool client initialized, shared_key=%s", this->shared_key_hex_.c_str());
 }
 
@@ -194,6 +196,9 @@ void OnePoolClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
       this->pump_state_ = false;
       this->light_state_ = false;
       this->update_sub_components_();
+      if (this->ble_connected_sensor_) this->ble_connected_sensor_->publish_state(false);
+      this->disconnect_count_++;
+      if (this->ble_disconnects_sensor_) this->ble_disconnects_sensor_->publish_state(this->disconnect_count_);
       break;
     }
 
@@ -307,6 +312,7 @@ void OnePoolClient::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         ESP_LOGI(TAG, "Status notifications registered");
         this->state_ = State::READY;
         this->authenticated_ = true;
+        if (this->ble_connected_sensor_) this->ble_connected_sensor_->publish_state(true);
         ESP_LOGI(TAG, "=== READY ===");
 
         // Read initial status from FBDE0104 (status char, not control)

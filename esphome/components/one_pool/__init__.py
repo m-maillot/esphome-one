@@ -5,7 +5,7 @@ from esphome.const import CONF_ID
 
 CODEOWNERS = ["@martial"]
 DEPENDENCIES = ["ble_client"]
-AUTO_LOAD = ["switch", "binary_sensor"]
+AUTO_LOAD = ["switch", "binary_sensor", "sensor"]
 
 CONF_SHARED_KEY = "shared_key"
 

@@ -5,6 +5,7 @@
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/sensor/sensor.h"
 #include <array>
 #include <string>
 
@@ -101,9 +102,16 @@ class OnePoolClient : public Component, public ble_client::BLEClientNode {
   void register_binary_sensor(OnePoolBinarySensor *bs) {
     this->binary_sensors_.push_back(bs);
   }
+  void set_ble_connected_sensor(binary_sensor::BinarySensor *sensor) {
+    this->ble_connected_sensor_ = sensor;
+  }
+  void set_ble_disconnects_sensor(sensor::Sensor *sensor) {
+    this->ble_disconnects_sensor_ = sensor;
+  }
 
   bool is_pump_on() const { return this->pump_state_; }
   bool is_light_on() const { return this->light_state_; }
+  bool is_ble_connected() const { return this->authenticated_; }
 
  protected:
   // Auth
@@ -127,6 +135,9 @@ class OnePoolClient : public Component, public ble_client::BLEClientNode {
   OnePoolSwitch *pump_switch_{nullptr};
   OnePoolSwitch *light_switch_{nullptr};
   std::vector<OnePoolBinarySensor *> binary_sensors_;
+  binary_sensor::BinarySensor *ble_connected_sensor_{nullptr};
+  sensor::Sensor *ble_disconnects_sensor_{nullptr};
+  uint32_t disconnect_count_{0};
 
   // Auth flow state machine
   enum class State {

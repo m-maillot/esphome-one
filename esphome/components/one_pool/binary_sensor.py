@@ -14,7 +14,7 @@ OnePoolBinarySensor = one_pool_ns.class_(
 CONFIG_SCHEMA = binary_sensor.binary_sensor_schema(OnePoolBinarySensor).extend(
     {
         cv.GenerateID(CONF_ONE_POOL_ID): cv.use_id(OnePoolClient),
-        cv.Required(CONF_TYPE): cv.one_of("pump", "light", lower=True),
+        cv.Required(CONF_TYPE): cv.one_of("pump", "light", "ble_connected", lower=True),
     }
 )
 
@@ -24,5 +24,8 @@ async def to_code(config):
     await cg.register_component(var, config)
     parent = await cg.get_variable(config[CONF_ONE_POOL_ID])
     cg.add(var.set_parent(parent))
-    cg.add(var.set_type(config[CONF_TYPE] == "pump"))
-    cg.add(parent.register_binary_sensor(var))
+    if config[CONF_TYPE] == "ble_connected":
+        cg.add(parent.set_ble_connected_sensor(var))
+    else:
+        cg.add(var.set_type(config[CONF_TYPE] == "pump"))
+        cg.add(parent.register_binary_sensor(var))
