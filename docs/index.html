@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESPHome On.e — Pont BLE-WiFi pour piscine</title>
+<meta name="description" content="Pilotez votre module On.e (ACIS) de piscine depuis Home Assistant via un ESP32 et ESPHome.">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.6; }
+
+/* Hero */
+.hero { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+.hero-icon { font-size: 4em; margin-bottom: 16px; }
+.hero h1 { font-size: 2.2em; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.hero h1 span { color: #3498db; }
+.hero p { font-size: 1.15em; color: #aab; max-width: 600px; margin: 0 auto 24px; }
+.hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+.badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+.badge-ha { background: #18bcf233; color: #18bcf2; }
+.badge-esp { background: #2ecc7133; color: #2ecc71; }
+.badge-ble { background: #9b59b633; color: #c39bd3; }
+.hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-size: 1em; font-weight: 600; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.btn-primary { background: #3498db; color: #fff; }
+.btn-secondary { background: #2c3e50; color: #eee; border: 1px solid #3a4a5e; }
+.btn-ble { background: #9b59b6; color: #fff; }
+
+/* Sections */
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+section { padding: 50px 0; }
+section h2 { font-size: 1.6em; font-weight: 700; color: #fff; margin-bottom: 24px; text-align: center; }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.feature { background: #16213e; border-radius: 14px; padding: 24px; border: 1px solid #1e3054; }
+.feature-icon { font-size: 2em; margin-bottom: 10px; }
+.feature h3 { font-size: 1.1em; color: #fff; margin-bottom: 6px; }
+.feature p { font-size: 0.9em; color: #9aa; }
+
+/* Steps */
+.steps { counter-reset: step; }
+.step { display: flex; gap: 20px; margin-bottom: 28px; align-items: flex-start; }
+.step::before { counter-increment: step; content: counter(step); flex-shrink: 0; width: 40px; height: 40px; background: #3498db; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; color: #fff; }
+.step-content h3 { font-size: 1.05em; color: #fff; margin-bottom: 4px; }
+.step-content p { font-size: 0.9em; color: #9aa; }
+.step-content a { color: #3498db; text-decoration: none; }
+.step-content a:hover { text-decoration: underline; }
+.step-content code { background: #1e3054; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; color: #8be9fd; }
+
+/* Models table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 12px; overflow: hidden; }
+th { background: #1e3054; padding: 12px 16px; text-align: left; font-size: 0.85em; color: #8be9fd; text-transform: uppercase; letter-spacing: 0.05em; }
+td { padding: 10px 16px; border-top: 1px solid #1e3054; font-size: 0.9em; }
+tr:hover td { background: #1a2844; }
+.status-ok { color: #2ecc71; }
+.status-untested { color: #95a5a6; }
+
+/* CTA */
+.cta { text-align: center; padding: 50px 20px; background: linear-gradient(135deg, #16213e, #0f3460); border-radius: 20px; margin: 40px 20px; }
+.cta h2 { margin-bottom: 12px; }
+.cta p { color: #9aa; margin-bottom: 24px; }
+
+/* Footer */
+footer { text-align: center; padding: 30px 20px; color: #556; font-size: 0.85em; }
+footer a { color: #3498db; text-decoration: none; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.6em; }
+  .hero p { font-size: 1em; }
+  .step { flex-direction: column; align-items: center; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-icon">&#x1F3CA;</div>
+  <h1>ESPHome <span>On.e</span></h1>
+  <p>Pilotez votre module On.e de piscine depuis Home Assistant via un ESP32 et ESPHome. Pompe, eclairage, en WiFi.</p>
+  <div class="hero-badges">
+    <span class="badge badge-ha">Home Assistant</span>
+    <span class="badge badge-esp">ESPHome</span>
+    <span class="badge badge-ble">Bluetooth LE</span>
+  </div>
+  <div class="hero-actions">
+    <a href="https://github.com/m-maillot/esphome-one" class="btn btn-primary">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Voir sur GitHub
+    </a>
+    <a href="test-ble.html" class="btn btn-ble">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+      Outil BLE
+    </a>
+  </div>
+</div>
+
+<!-- Features -->
+<section>
+  <div class="container">
+    <h2>Fonctionnalites</h2>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">&#x1F4A7;</div>
+        <h3>Pompe</h3>
+        <p>Allumez et eteignez la pompe de filtration depuis Home Assistant ou l'interface web locale.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1F4A1;</div>
+        <h3>Eclairage</h3>
+        <p>Controlez l'eclairage de votre piscine, y compris depuis des automatisations HA.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1F4F6;</div>
+        <h3>Retour d'etat</h3>
+        <p>Statut en temps reel via notifications BLE. Vous savez toujours si la pompe ou la lumiere est active.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1F512;</div>
+        <h3>Authentification</h3>
+        <p>Protocole challenge-response AES-128-ECB entierement implemente. Votre piscine reste securisee.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1F570;</div>
+        <h3>Horloge RTC</h3>
+        <p>Synchronisation automatique de l'horloge du module On.e a chaque connexion.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x1F310;</div>
+        <h3>100% local</h3>
+        <p>Aucun cloud necessaire. Tout fonctionne en local entre l'ESP32, le module BLE et Home Assistant.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Installation -->
+<section>
+  <div class="container">
+    <h2>Installation rapide</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-content">
+          <h3>Recuperer la SharedKey</h3>
+          <p>Ouvrez l'<a href="test-ble.html">outil BLE</a> sur Chrome Android, mettez votre module en mode appairage, et scannez. La SharedKey s'affiche automatiquement.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h3>Configurer ESPHome</h3>
+          <p>Editez <code>secrets.yaml</code> avec votre WiFi, l'adresse MAC du module et la SharedKey recuperee.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h3>Flasher l'ESP32</h3>
+          <p>Lancez <code>esphome run one-pool.yaml</code> pour compiler et flasher votre ESP32.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h3>Profiter dans Home Assistant</h3>
+          <p>Le device apparait automatiquement avec les switches Pompe et Lumiere. Creez vos automatisations !</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Models -->
+<section>
+  <div class="container">
+    <h2>Modeles supportes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Modele</th><th>Nom BLE</th><th>Service</th><th>Statut</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ONE</td><td>ON.E</td><td>FBDE01xx</td><td class="status-ok">&#x2705; Supporte</td></tr>
+          <tr><td>ONE VS</td><td>ON.EVS</td><td>FBDE03xx</td><td class="status-untested">Non teste</td></tr>
+          <tr><td>TLC3 ONE</td><td>TLC3ON.E</td><td>FBDE05xx</td><td class="status-untested">Non teste</td></tr>
+          <tr><td>ONE Salt</td><td>ON.E SALT</td><td>FBDE06xx</td><td class="status-untested">Non teste</td></tr>
+          <tr><td>ONE Connect</td><td>ON.E CONNECT</td><td>FBDE08xx</td><td class="status-untested">Non teste</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="container">
+  <div class="cta">
+    <h2>Pret a connecter votre piscine ?</h2>
+    <p>Tout le code source est disponible sur GitHub. Contributions bienvenues !</p>
+    <div class="hero-actions">
+      <a href="https://github.com/m-maillot/esphome-one" class="btn btn-primary">
+        Voir le projet sur GitHub
+      </a>
+      <a href="test-ble.html" class="btn btn-ble">
+        Lancer l'outil BLE
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>Projet open-source. Non affilie a ACIS ni a la marque On.e.</p>
+  <p><a href="https://github.com/m-maillot/esphome-one">GitHub</a> &middot; <a href="https://github.com/m-maillot/esphome-one/blob/main/PROTOCOL.md">Documentation protocole</a></p>
+</footer>
+
+</body>
+</html>

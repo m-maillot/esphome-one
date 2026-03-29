@@ -25,7 +25,9 @@ Le module On.e gere l'allumage/extinction de la pompe et de l'eclairage de pisci
 .
 ├── README.md                  # Ce fichier
 ├── PROTOCOL.md                # Documentation complete du protocole BLE
-├── test-ble.html              # Page de test Web Bluetooth (association + controle)
+├── docs/
+│   ├── index.html             # Page de presentation (GitHub Pages)
+│   └── test-ble.html          # Page de test Web Bluetooth (association + controle)
 ├── esphome/
 │   ├── one-pool.yaml          # Configuration ESPHome principale
 │   ├── secrets.yaml           # Parametres propres a votre installation
@@ -49,7 +51,7 @@ Le module On.e gere l'allumage/extinction de la pompe et de l'eclairage de pisci
 
 Chaque module On.e possede une **SharedKey** unique echangee lors du premier appairage. Vous devez la recuperer une seule fois.
 
-Ouvrez `test-ble.html` sur un navigateur Android compatible Web Bluetooth (Chrome) :
+Ouvrez l'**[outil BLE en ligne](https://m-maillot.github.io/esphome-one/test-ble.html)** sur Chrome Android :
 
 1. Mettez le module On.e en **mode appairage** (bouton physique sur le module)
 2. Cliquez sur **Scanner** et selectionnez votre device
